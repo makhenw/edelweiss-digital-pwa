@@ -2,83 +2,324 @@
 <html lang="id">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+
+  <meta
+    name="viewport"
+    content="width=device-width,initial-scale=1,viewport-fit=cover"
+  >
+
   <meta name="theme-color" content="#0f172a">
+
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="Edelweiss Digital">
-  <link rel="manifest" href="manifest.webmanifest">
-  <link rel="icon" href="icons/icon-192.png">
-  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <meta
+    name="apple-mobile-web-app-status-bar-style"
+    content="black-translucent"
+  >
+  <meta
+    name="apple-mobile-web-app-title"
+    content="Edelweiss Digital"
+  >
+
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="icon" href="./icons/icon-192.png">
+  <link rel="apple-touch-icon" href="./icons/icon-192.png">
+
   <title>Edelweiss Digital</title>
+
   <style>
-    :root { color-scheme: dark; }
-    * { box-sizing: border-box; }
-    html, body { margin:0; min-height:100%; font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; background:#0f172a; }
-    body { min-height:100vh; display:flex; align-items:center; justify-content:center; padding:24px; }
-    main { width:min(520px,100%); text-align:center; }
-    img { width:96px; height:96px; border-radius:22px; margin-bottom:20px; }
-    h1 { margin:0 0 8px; font-size:28px; }
-    p { color:#cbd5e1; line-height:1.5; margin:0 0 24px; }
-    button { width:100%; min-height:52px; border:0; border-radius:16px; background:#fff; color:#0f172a; font-weight:700; font-size:16px; cursor:pointer; }
-    .secondary { margin-top:12px; background:#1e293b; color:#e2e8f0; }
-    #status { margin-top:16px; min-height:24px; font-size:13px; color:#94a3b8; }
+    :root {
+      color-scheme: dark;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #0f172a;
+    }
+
+    body {
+      font-family:
+        system-ui,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
+    }
+
+    #app {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      background: #0f172a;
+    }
+
+    #appFrame {
+      display: block;
+      width: 100%;
+      height: 100%;
+      border: 0;
+      margin: 0;
+      padding: 0;
+      background: #0f172a;
+    }
+
+    #loading {
+      position: fixed;
+      inset: 0;
+      z-index: 20;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 16px;
+      background: #0f172a;
+      color: #fff;
+    }
+
+    #loading img {
+      width: 88px;
+      height: 88px;
+      border-radius: 22px;
+    }
+
+    #loadingTitle {
+      font-size: 22px;
+      font-weight: 700;
+    }
+
+    #loadingText {
+      font-size: 14px;
+      color: #94a3b8;
+    }
+
+    .spinner {
+      width: 32px;
+      height: 32px;
+      border: 3px solid rgba(255,255,255,.20);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin .8s linear infinite;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    #error {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 30;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      background: #0f172a;
+      color: #fff;
+      text-align: center;
+    }
+
+    #errorBox {
+      width: min(460px, 100%);
+    }
+
+    #errorTitle {
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+
+    #errorText {
+      color: #cbd5e1;
+      line-height: 1.5;
+      font-size: 14px;
+    }
+
+    #retry {
+      margin-top: 20px;
+      width: 100%;
+      min-height: 52px;
+      border: 0;
+      border-radius: 15px;
+      background: #fff;
+      color: #0f172a;
+      font-size: 16px;
+      font-weight: 700;
+    }
   </style>
 </head>
+
 <body>
-<main>
-  <img src="icons/icon-192.png" alt="Edelweiss Digital">
-  <h1>Edelweiss Digital</h1>
-  <p>Portal digital Grand LaPalma Estate.</p>
-  <button id="openBtn">Masuk ke Aplikasi</button>
-  <button id="installBtn" class="secondary" hidden>Install Aplikasi</button>
-  <div id="status"></div>
-</main>
-<script src="config.js"></script>
-<script>
-  const gasUrl = String(window.EDELWEISS_GAS_URL || "").trim();
-  const statusEl = document.getElementById("status");
-  const openBtn = document.getElementById("openBtn");
-  const installBtn = document.getElementById("installBtn");
-  let deferredPrompt = null;
 
-  function openApp() {
-    if (!gasUrl || gasUrl.includes("PASTE_GAS_WEB_APP_URL_HERE")) {
-      statusEl.textContent = "URL Web App GAS belum diatur di config.js.";
-      return;
-    }
-    window.location.href = gasUrl + (gasUrl.includes("?") ? "&" : "?") + "page=public";
-  }
+  <div id="app">
 
-  openBtn.addEventListener("click", openApp);
+    <div id="loading">
+      <img
+        src="./icons/icon-192.png"
+        alt="Edelweiss Digital"
+      >
 
-  window.addEventListener("beforeinstallprompt", (e) => {
-    e.preventDefault();
-    deferredPrompt = e;
-    installBtn.hidden = false;
-  });
+      <div id="loadingTitle">
+        Edelweiss Digital
+      </div>
 
-  installBtn.addEventListener("click", async () => {
-    if (!deferredPrompt) return;
-    deferredPrompt.prompt();
-    await deferredPrompt.userChoice;
-    deferredPrompt = null;
-    installBtn.hidden = true;
-  });
+      <div class="spinner"></div>
 
-  window.addEventListener("appinstalled", () => {
-    installBtn.hidden = true;
-    statusEl.textContent = "Edelweiss Digital berhasil dipasang.";
-  });
+      <div id="loadingText">
+        Membuka aplikasi...
+      </div>
+    </div>
 
-  if ("serviceWorker" in navigator) {
-    window.addEventListener("load", () => {
-      navigator.serviceWorker.register("./service-worker.js").catch(err => {
-        console.error("Service Worker:", err);
+    <iframe
+      id="appFrame"
+      title="Edelweiss Digital"
+      allow="clipboard-read; clipboard-write"
+      referrerpolicy="strict-origin-when-cross-origin"
+    ></iframe>
+
+  </div>
+
+  <div id="error">
+    <div id="errorBox">
+
+      <div id="errorTitle">
+        Aplikasi belum dapat dibuka
+      </div>
+
+      <div id="errorText">
+        Periksa koneksi internet Anda kemudian coba lagi.
+      </div>
+
+      <button id="retry">
+        Coba Lagi
+      </button>
+
+    </div>
+  </div>
+
+  <script src="./config.js"></script>
+
+  <script>
+    (function () {
+
+      const GAS_URL =
+        String(window.EDELWEISS_GAS_URL || "").trim();
+
+      const frame =
+        document.getElementById("appFrame");
+
+      const loading =
+        document.getElementById("loading");
+
+      const error =
+        document.getElementById("error");
+
+      const retry =
+        document.getElementById("retry");
+
+      function showError(message) {
+        loading.style.display = "none";
+        error.style.display = "flex";
+
+        document.getElementById("errorText").textContent =
+          message ||
+          "Aplikasi belum dapat dibuka.";
+      }
+
+      function openApplication() {
+
+        if (
+          !GAS_URL ||
+          GAS_URL.includes("PASTE_GAS_WEB_APP_URL_HERE")
+        ) {
+          showError(
+            "URL Web App GAS belum tersedia."
+          );
+          return;
+        }
+
+        let target = GAS_URL;
+
+        target +=
+          (target.includes("?") ? "&" : "?") +
+          "page=public";
+
+        frame.src = target;
+      }
+
+      frame.addEventListener("load", function () {
+
+        /*
+         * iframe sudah menerima halaman.
+         * Kita tidak membaca isi iframe karena domain
+         * Google Apps Script berbeda dengan GitHub Pages.
+         */
+        setTimeout(function () {
+          loading.style.display = "none";
+        }, 500);
+
       });
-    });
-  }
-</script>
+
+      frame.addEventListener("error", function () {
+
+        showError(
+          "Aplikasi Edelweiss tidak dapat dimuat."
+        );
+
+      });
+
+      retry.addEventListener(
+        "click",
+        function () {
+
+          error.style.display = "none";
+          loading.style.display = "flex";
+
+          openApplication();
+
+        }
+      );
+
+      openApplication();
+
+      /*
+       * Register Service Worker.
+       */
+      if ("serviceWorker" in navigator) {
+
+        window.addEventListener(
+          "load",
+          function () {
+
+            navigator.serviceWorker
+              .register("./service-worker.js")
+              .catch(function (err) {
+
+                console.warn(
+                  "Service Worker gagal:",
+                  err
+                );
+
+              });
+
+          }
+        );
+
+      }
+
+    })();
+  </script>
+
 </body>
 </html>
