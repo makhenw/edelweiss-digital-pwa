@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#0f172a">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Edelweiss Digital">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon-192.png">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <title>Edelweiss Digital</title>
+  <style>
+    :root { color-scheme: dark; }
+    * { box-sizing: border-box; }
+    html, body { margin:0; min-height:100%; font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; background:#0f172a; }
+    body { min-height:100vh; display:flex; align-items:center; justify-content:center; padding:24px; }
+    main { width:min(520px,100%); text-align:center; }
+    img { width:96px; height:96px; border-radius:22px; margin-bottom:20px; }
+    h1 { margin:0 0 8px; font-size:28px; }
+    p { color:#cbd5e1; line-height:1.5; margin:0 0 24px; }
+    button { width:100%; min-height:52px; border:0; border-radius:16px; background:#fff; color:#0f172a; font-weight:700; font-size:16px; cursor:pointer; }
+    .secondary { margin-top:12px; background:#1e293b; color:#e2e8f0; }
+    #status { margin-top:16px; min-height:24px; font-size:13px; color:#94a3b8; }
+  </style>
+</head>
+<body>
+<main>
+  <img src="icons/icon-192.png" alt="Edelweiss Digital">
+  <h1>Edelweiss Digital</h1>
+  <p>Portal digital Grand LaPalma Estate.</p>
+  <button id="openBtn">Masuk ke Aplikasi</button>
+  <button id="installBtn" class="secondary" hidden>Install Aplikasi</button>
+  <div id="status"></div>
+</main>
+<script src="config.js"></script>
+<script>
+  const gasUrl = String(window.EDELWEISS_GAS_URL || "").trim();
+  const statusEl = document.getElementById("status");
+  const openBtn = document.getElementById("openBtn");
+  const installBtn = document.getElementById("installBtn");
+  let deferredPrompt = null;
+
+  function openApp() {
+    if (!gasUrl || gasUrl.includes("PASTE_GAS_WEB_APP_URL_HERE")) {
+      statusEl.textContent = "URL Web App GAS belum diatur di config.js.";
+      return;
+    }
+    window.location.href = gasUrl + (gasUrl.includes("?") ? "&" : "?") + "page=public";
+  }
+
+  openBtn.addEventListener("click", openApp);
+
+  window.addEventListener("beforeinstallprompt", (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    installBtn.hidden = false;
+  });
+
+  installBtn.addEventListener("click", async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    await deferredPrompt.userChoice;
+    deferredPrompt = null;
+    installBtn.hidden = true;
+  });
+
+  window.addEventListener("appinstalled", () => {
+    installBtn.hidden = true;
+    statusEl.textContent = "Edelweiss Digital berhasil dipasang.";
+  });
+
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register("./service-worker.js").catch(err => {
+        console.error("Service Worker:", err);
+      });
+    });
+  }
+</script>
+</body>
+</html>
