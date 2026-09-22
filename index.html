@@ -8,22 +8,44 @@
     content="width=device-width,initial-scale=1,viewport-fit=cover"
   >
 
-  <meta name="theme-color" content="#0f172a">
+  <meta name="theme-color" content="#07111b">
 
   <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-capable" content="yes">
+
+  <meta
+    name="apple-mobile-web-app-capable"
+    content="yes"
+  >
+
   <meta
     name="apple-mobile-web-app-status-bar-style"
     content="black-translucent"
   >
+
   <meta
     name="apple-mobile-web-app-title"
     content="Edelweiss Digital"
   >
 
-  <link rel="manifest" href="./manifest.webmanifest">
-  <link rel="icon" href="./icons/icon-192.png">
-  <link rel="apple-touch-icon" href="./icons/icon-192.png">
+  <!-- PWA MANIFEST -->
+  <link
+    rel="manifest"
+    href="./manifest.json"
+  >
+
+  <!-- FAVICON / APP ICON -->
+  <link
+    rel="icon"
+    type="image/png"
+    sizes="192x192"
+    href="./icons/edelweiss-digital-icon-192.png"
+  >
+
+  <!-- APPLE / MOBILE ICON -->
+  <link
+    rel="apple-touch-icon"
+    href="./icons/edelweiss-digital-icon-192.png"
+  >
 
   <title>Edelweiss Digital</title>
 
@@ -43,7 +65,7 @@
       width: 100%;
       height: 100%;
       overflow: hidden;
-      background: #0f172a;
+      background: #07111b;
     }
 
     body {
@@ -60,7 +82,7 @@
       inset: 0;
       width: 100%;
       height: 100%;
-      background: #0f172a;
+      background: #07111b;
     }
 
     #appFrame {
@@ -70,7 +92,7 @@
       border: 0;
       margin: 0;
       padding: 0;
-      background: #0f172a;
+      background: #07111b;
     }
 
     #loading {
@@ -82,7 +104,7 @@
       justify-content: center;
       flex-direction: column;
       gap: 16px;
-      background: #0f172a;
+      background: #07111b;
       color: #fff;
     }
 
@@ -90,6 +112,9 @@
       width: 88px;
       height: 88px;
       border-radius: 22px;
+      object-fit: cover;
+      box-shadow:
+        0 12px 40px rgba(0,0,0,.45);
     }
 
     #loadingTitle {
@@ -106,7 +131,7 @@
       width: 32px;
       height: 32px;
       border: 3px solid rgba(255,255,255,.20);
-      border-top-color: #fff;
+      border-top-color: #d8b46a;
       border-radius: 50%;
       animation: spin .8s linear infinite;
     }
@@ -125,7 +150,7 @@
       align-items: center;
       justify-content: center;
       padding: 24px;
-      background: #0f172a;
+      background: #07111b;
       color: #fff;
       text-align: center;
     }
@@ -152,8 +177,8 @@
       min-height: 52px;
       border: 0;
       border-radius: 15px;
-      background: #fff;
-      color: #0f172a;
+      background: #d8b46a;
+      color: #07111b;
       font-size: 16px;
       font-weight: 700;
     }
@@ -165,8 +190,10 @@
   <div id="app">
 
     <div id="loading">
+
+      <!-- LOGO BARU -->
       <img
-        src="./icons/icon-192.png"
+        src="./icons/edelweiss-digital-icon-192.png"
         alt="Edelweiss Digital"
       >
 
@@ -179,6 +206,7 @@
       <div id="loadingText">
         Membuka aplikasi...
       </div>
+
     </div>
 
     <iframe
@@ -191,6 +219,7 @@
   </div>
 
   <div id="error">
+
     <div id="errorBox">
 
       <div id="errorTitle">
@@ -206,6 +235,7 @@
       </button>
 
     </div>
+
   </div>
 
   <script src="./config.js"></script>
@@ -229,12 +259,15 @@
         document.getElementById("retry");
 
       function showError(message) {
+
         loading.style.display = "none";
+
         error.style.display = "flex";
 
         document.getElementById("errorText").textContent =
           message ||
           "Aplikasi belum dapat dibuka.";
+
       }
 
       function openApplication() {
@@ -243,9 +276,11 @@
           !GAS_URL ||
           GAS_URL.includes("PASTE_GAS_WEB_APP_URL_HERE")
         ) {
+
           showError(
             "URL Web App GAS belum tersedia."
           );
+
           return;
         }
 
@@ -256,34 +291,42 @@
           "page=public";
 
         frame.src = target;
+
       }
 
-      frame.addEventListener("load", function () {
+      frame.addEventListener(
+        "load",
+        function () {
 
-        /*
-         * iframe sudah menerima halaman.
-         * Kita tidak membaca isi iframe karena domain
-         * Google Apps Script berbeda dengan GitHub Pages.
-         */
-        setTimeout(function () {
-          loading.style.display = "none";
-        }, 500);
+          setTimeout(
+            function () {
 
-      });
+              loading.style.display = "none";
 
-      frame.addEventListener("error", function () {
+            },
+            500
+          );
 
-        showError(
-          "Aplikasi Edelweiss tidak dapat dimuat."
-        );
+        }
+      );
 
-      });
+      frame.addEventListener(
+        "error",
+        function () {
+
+          showError(
+            "Aplikasi Edelweiss tidak dapat dimuat."
+          );
+
+        }
+      );
 
       retry.addEventListener(
         "click",
         function () {
 
           error.style.display = "none";
+
           loading.style.display = "flex";
 
           openApplication();
@@ -294,7 +337,9 @@
       openApplication();
 
       /*
-       * Register Service Worker.
+       * SERVICE WORKER
+       *
+       * Menggunakan service-worker.js V3.
        */
       if ("serviceWorker" in navigator) {
 
@@ -303,7 +348,20 @@
           function () {
 
             navigator.serviceWorker
-              .register("./service-worker.js")
+              .register(
+                "./service-worker.js",
+                {
+                  scope: "./"
+                }
+              )
+              .then(function (registration) {
+
+                console.log(
+                  "Edelweiss Digital Service Worker aktif:",
+                  registration.scope
+                );
+
+              })
               .catch(function (err) {
 
                 console.warn(
