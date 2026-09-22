@@ -1,13 +1,34 @@
-const CACHE_NAME = "edelweiss-pwa-v2";
+/*
+ * EDELWEISS DIGITAL PWA — SERVICE WORKER V3
+ * Logo/icon cache refresh:
+ *   V2 -> V3
+ *
+ * Prinsip:
+ * - Cache hanya aset same-origin milik PWA.
+ * - Jangan cache Google Apps Script / GAS response.
+ * - Navigasi tetap mencoba network terlebih dahulu.
+ * - Icon baru diprioritaskan dari cache V3.
+ */
+
+const CACHE_NAME = "edelweiss-digital-pwa-v3";
+const OLD_CACHES = [
+  "edelweiss-digital-pwa-v1",
+  "edelweiss-digital-pwa-v2"
+];
 
 const APP_SHELL = [
   "./",
   "./index.html",
-  "./manifest.webmanifest",
-  "./offline.html",
-  "./icons/icon-192.png",
-  "./icons/icon-512.png"
+  "./manifest.json",
+  "./edelweiss-digital-icon-192.png",
+  "./edelweiss-digital-icon-512.png",
+  "./edelweiss-digital-icon-512-maskable.png"
 ];
+
+function isGAS(url) {
+  return /(^|\.)script\.google\.com$/i.test(url.hostname) ||
+         /(^|\.)googleusercontent\.com$/i.test(url.hostname);
+}
 
 self.addEventListener("install", event => {
   event.waitUntil(
@@ -19,48 +40,56 @@ self.addEventListener("install", event => {
 
 self.addEventListener("activate", event => {
   event.waitUntil(
-    caches.keys().then(keys =>
-      Promise.all(
+    caches.keys()
+      .then(keys => Promise.all(
         keys
           .filter(key => key !== CACHE_NAME)
           .map(key => caches.delete(key))
-      )
-    ).then(() => self.clients.claim())
+      ))
+      .then(() => self.clients.claim())
   );
 });
 
 self.addEventListener("fetch", event => {
   const request = event.request;
-
   if (request.method !== "GET") return;
 
   const url = new URL(request.url);
 
-  // Jangan cache config.js.
-  // Selalu ambil konfigurasi terbaru dari GitHub Pages.
-  if (url.pathname.endsWith("/config.js")) {
+  // Jangan intercept / cache GAS atau domain eksternal.
+  if (isGAS(url) || url.origin !== self.location.origin) return;
+
+  // Navigasi: network-first, fallback ke shell.
+  if (request.mode === "navigate") {
     event.respondWith(
-      fetch(request, { cache: "no-store" })
-        .catch(() => caches.match(request))
+      fetch(request)
+        .then(response => {
+          if (response && response.ok) {
+            const copy = response.clone();
+            caches.open(CACHE_NAME).then(cache => cache.put(request, copy));
+          }
+          return response;
+        })
+        .catch(() =>
+          caches.match(request).then(cached =>
+            cached || caches.match("./index.html")
+          )
+        )
     );
     return;
   }
 
-  // Jangan cache aplikasi/data Google Apps Script.
-  if (
-    url.hostname.includes("script.google.com") ||
-    url.hostname.includes("googleusercontent.com")
-  ) {
-    return;
-  }
-
+  // Static assets: cache-first.
   event.respondWith(
     caches.match(request).then(cached => {
-      return cached || fetch(request).catch(() => {
-        if (request.mode === "navigate") {
-          return caches.match("./offline.html");
+      if (cached) return cached;
+
+      return fetch(request).then(response => {
+        if (response && response.ok) {
+          const copy = response.clone();
+          caches.open(CACHE_NAME).then(cache => cache.put(request, copy));
         }
-        return Response.error();
+        return response;
       });
     })
   );
